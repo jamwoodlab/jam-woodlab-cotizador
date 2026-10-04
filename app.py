@@ -10,6 +10,7 @@ st.set_page_config(page_title="JAM Woodlab App", page_icon="🪚", layout="cente
 st.title("JAM Woodlab - Cotizador Web")
 if os.path.exists("logo.png"):
     st.image("logo.png", width=120)
+
 st.markdown("---")
 
 # 1. Datos del Cliente
@@ -67,7 +68,10 @@ if st.button("Calcular y Generar Cotización", use_container_width=True):
         total_insumos_fab = insumos + costo_extra_acabado
 
         if "Sin instalación" in tipo_inst:
-            horas_inst = 0; mat_inst = 0; gasolina = 0; mano_obra_inst = 0
+            horas_inst = 0
+            mat_inst = 0
+            gasolina = 0
+            mano_obra_inst = 0
         else:
             mult_inst = 1.5 if "Compleja" in tipo_inst else 1.0
             mano_obra_inst = horas_inst * (hora_base * mult_inst)
@@ -98,13 +102,14 @@ if st.button("Calcular y Generar Cotización", use_container_width=True):
         pdf = FPDF()
         pdf.add_page()
         
+        if os.path.exists("logo.png"):
+            try:
+                pdf.image("logo.png", x=10, y=8, w=35)
+            except:
+                pass
+
         pdf.set_font("Arial", 'B', 24)
         pdf.set_text_color(51, 51, 51)
-        if os.path.exists("logo.png"):
-    try:
-        pdf.image("logo.png", x=10, y=8, w=35)
-    except:
-        pass
         pdf.cell(0, 15, txt="JAM WOODLAB", ln=True, align='R')
         pdf.set_font("Arial", '', 10)
         pdf.set_text_color(100, 100, 100)
@@ -153,9 +158,8 @@ if st.button("Calcular y Generar Cotización", use_container_width=True):
             with open(tmp_file.name, "rb") as f:
                 pdf_bytes = f.read()
         
-        os.unlink(tmp_file.name) # Limpiar archivo temporal
+        os.unlink(tmp_file.name)
         
-        # Botón de Descarga
         st.download_button(
             label="📥 Descargar PDF Comercial",
             data=pdf_bytes,
