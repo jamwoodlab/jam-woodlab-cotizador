@@ -8,6 +8,8 @@ import os
 st.set_page_config(page_title="JAM Woodlab App", page_icon="🪚", layout="centered")
 
 st.title("JAM Woodlab - Cotizador Web")
+if os.path.exists("logo.png"):
+    st.image("logo.png", width=120)
 st.markdown("---")
 
 # 1. Datos del Cliente
@@ -98,6 +100,11 @@ if st.button("Calcular y Generar Cotización", use_container_width=True):
         
         pdf.set_font("Arial", 'B', 24)
         pdf.set_text_color(51, 51, 51)
+        if os.path.exists("logo.png"):
+    try:
+        pdf.image("logo.png", x=10, y=8, w=35)
+    except:
+        pass
         pdf.cell(0, 15, txt="JAM WOODLAB", ln=True, align='R')
         pdf.set_font("Arial", '', 10)
         pdf.set_text_color(100, 100, 100)
