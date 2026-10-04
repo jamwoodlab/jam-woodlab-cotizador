@@ -25,43 +25,43 @@ with st.expander("⚙️ Configuración de Precios de Tableros / Hojas"):
     st.markdown("Define los precios base por tipo y espesor:")
     col_cfg1, col_cfg2 = st.columns(2)
     with col_cfg1:
-        precio_pino_18 = st.number_input("Pino 18mm ($)", value=1000.0)[span_8](start_span)[span_8](end_span)
-        precio_pino_15 = st.number_input("Pino 15mm ($)", value=850.0)[span_9](start_span)[span_9](end_span)
-        precio_pino_9 = st.number_input("Pino 9mm ($)", value=700.0)[span_10](start_span)[span_10](end_span)
-        precio_pino_6 = st.number_input("Pino 6mm ($)", value=600.0)[span_11](start_span)[span_11](end_span)
+        precio_pino_18 = st.number_input("Pino 18mm ($)", value=1000.0)
+        precio_pino_15 = st.number_input("Pino 15mm ($)", value=850.0)
+        precio_pino_9 = st.number_input("Pino 9mm ($)", value=700.0)
+        precio_pino_6 = st.number_input("Pino 6mm ($)", value=600.0)
     with col_cfg2:
-        precio_caobilla_18 = st.number_input("Caobilla/Roble 18mm ($)", value=1300.0)[span_12](start_span)[span_12](end_span)
-        precio_caobilla_15 = st.number_input("Caobilla/Roble 15mm ($)", value=1100.0)[span_13](start_span)[span_13](end_span)
-        precio_caobilla_9 = st.number_input("Caobilla/Roble 9mm ($)", value=900.0)[span_14](start_span)[span_14](end_span)
-        precio_caobilla_6 = st.number_input("Caobilla/Roble 6mm ($)", value=750.0)[span_15](start_span)[span_15](end_span)
+        precio_caobilla_18 = st.number_input("Caobilla/Roble 18mm ($)", value=1300.0)
+        precio_caobilla_15 = st.number_input("Caobilla/Roble 15mm ($)", value=1100.0)
+        precio_caobilla_9 = st.number_input("Caobilla/Roble 9mm ($)", value=900.0)
+        precio_caobilla_6 = st.number_input("Caobilla/Roble 6mm ($)", value=750.0)
 
-tipo_madera = st.selectbox("Tipo de Material Base", ["Hojas (Triplay / MDF / Melamina)", "Pie Tablar (Madera Fina / Sólida)"])[span_16](start_span)[span_16](end_span)
+tipo_madera = st.selectbox("Tipo de Material Base", ["Hojas (Triplay / MDF / Melamina)", "Pie Tablar (Madera Fina / Sólida)"])
 
 costo_madera_total = 0.0
 detalle_materiales_pdf = []
 
 if "Hojas" in tipo_madera:
-    st.subheader("Selección de Hojas para el Proyecto")[span_17](start_span)[span_17](end_span)
-    num_partidas = st.number_input("¿Cuántos tipos/espesores de hojas diferentes usarás?", min_value=1, max_value=5, value=1)[span_18](start_span)[span_18](end_span)
+    st.subheader("Selección de Hojas para el Proyecto")
+    num_partidas = st.number_input("¿Cuántos tipos/espesores de hojas diferentes usarás?", min_value=1, max_value=5, value=1)
     
     for i in range(int(num_partidas)):
-        st.markdown(f"**Partida {i+1}**")[span_19](start_span)[span_19](end_span)
+        st.markdown(f"**Partida {i+1}**")
         col_m1, col_m2, col_m3 = st.columns(3)
         with col_m1:
-            m_tipo = st.selectbox(f"Madera {i+1}", ["Pino", "Caobilla / Roble"], key=f"mtipo_{i}")[span_20](start_span)[span_20](end_span)
+            m_tipo = st.selectbox(f"Madera {i+1}", ["Pino", "Caobilla / Roble"], key=f"mtipo_{i}")
         with col_m2:
-            m_esp = st.selectbox(f"Espesor {i+1}", ["18mm", "15mm", "9mm", "6mm"], key=f"mesp_{i}")[span_21](start_span)[span_21](end_span)
+            m_esp = st.selectbox(f"Espesor {i+1}", ["18mm", "15mm", "9mm", "6mm"], key=f"mesp_{i}")
         with col_m3:
-            m_cant = st.number_input(f"Cantidad hojas {i+1}", min_value=0.0, value=1.0, key=f"mcant_{i}")[span_22](start_span)[span_22](end_span)
+            m_cant = st.number_input(f"Cantidad hojas {i+1}", min_value=0.0, value=1.0, key=f"mcant_{i}")
             
         if m_tipo == "Pino":
-            p_unit = precio_pino_18 if m_esp == "18mm" else precio_pino_15 if m_esp == "15mm" else precio_pino_9 if m_esp == "9mm" else precio_pino_6[span_23](start_span)[span_23](end_span)
+            p_unit = precio_pino_18 if m_esp == "18mm" else precio_pino_15 if m_esp == "15mm" else precio_pino_9 if m_esp == "9mm" else precio_pino_6
         else:
-            p_unit = precio_caobilla_18 if m_esp == "18mm" else precio_caobilla_15 if m_esp == "15mm" else precio_caobilla_9 if m_esp == "9mm" else precio_caobilla_6[span_24](start_span)[span_24](end_span)
+            p_unit = precio_caobilla_18 if m_esp == "18mm" else precio_caobilla_15 if m_esp == "15mm" else precio_caobilla_9 if m_esp == "9mm" else precio_caobilla_6
             
         sub_mat = p_unit * m_cant
         costo_madera_total += sub_mat
-        detalle_materiales_pdf.append(f"- {m_cant} hoja(s) de {m_tipo} {m_esp} ($ {p_unit:,.2f} c/u)")[span_25](start_span)[span_25](end_span)
+        detalle_materiales_pdf.append(f"- {m_cant} hoja(s) de {m_tipo} {m_esp} ($ {p_unit:,.2f} c/u)")
 else:
     col1, col2 = st.columns(2)
     cantidad_pt = col1.number_input("Cantidad (Pies Tablar)", min_value=0.0, value=10.0)
@@ -70,12 +70,12 @@ else:
     detalle_materiales_pdf.append(f"- {cantidad_pt} Pies Tablar de madera sólida")
 
 # 3. Fabricación y Acabados
-st.header("3. Fabricación y Acabados")[span_26](start_span)[span_26](end_span)
-detalle = st.selectbox("Dificultad", ["Básico (Armado rápido)", "Detallado (+30% tiempo)", "Alta Ebanistería (+80% tiempo)"])[span_27](start_span)[span_27](end_span)
-acabado = st.selectbox("Acabado", ["Ninguno (Crudo)", "Aceite Danés / Cera Abeja", "Poliuretano / Barniz"])[span_28](start_span)[span_28](end_span)[span_29](start_span)[span_29](end_span)
+st.header("3. Fabricación y Acabados")
+detalle = st.selectbox("Dificultad", ["Básico (Armado rápido)", "Detallado (+30% tiempo)", "Alta Ebanistería (+80% tiempo)"])
+acabado = st.selectbox("Acabado", ["Ninguno (Crudo)", "Aceite Danés / Cera Abeja", "Poliuretano / Barniz"])
 
 # Casilla de verificación de stock (Sayer / kits completos)
-usar_stock = st.checkbox("📦 Usar material en stock / inventario (Cobrar solo proporcional al área)")[span_30](start_span)[span_30](end_span)
+usar_stock = st.checkbox("📦 Usar material en stock / inventario (Cobrar solo proporcional al área)")
 
 col3, col4, col5 = st.columns(3)
 horas_est = col3.number_input("Horas Fab.", min_value=0.0, value=5.0)
@@ -84,11 +84,11 @@ insumos = col5.number_input("Insumos generales ($)", min_value=0.0, value=250.0)
 
 costo_extra_acabado = 0.0
 if "Poliuretano" in acabado:
-    kit_completo_poli = 850.0  # Primer, Acabado, Catalizador, Thinner[span_31](start_span)[span_31](end_span)
-    costo_extra_acabado = kit_completo_poli * 0.35 if usar_stock else kit_completo_poli[span_32](start_span)[span_32](end_span)
+    kit_completo_poli = 850.0  # Primer, Acabado, Catalizador, Thinner
+    costo_extra_acabado = kit_completo_poli * 0.35 if usar_stock else kit_completo_poli
 elif "Aceite" in acabado:
-    kit_completo_aceite = 450.0  # 1L aceite + 1/4L tinta[span_33](start_span)[span_33](end_span)
-    costo_extra_acabado = kit_completo_aceite * 0.35 if usar_stock else kit_completo_aceite[span_34](start_span)[span_34](end_span)
+    kit_completo_aceite = 450.0  # 1L aceite + 1/4L tinta
+    costo_extra_acabado = kit_completo_aceite * 0.35 if usar_stock else kit_completo_aceite
 
 # 4. Instalación
 st.header("4. Instalación y Fletes")
@@ -99,15 +99,15 @@ gasolina = col7.number_input("Flete ($)", min_value=0.0, value=150.0)
 mat_inst = col8.number_input("Mat. Extra ($)", min_value=0.0, value=120.0)
 
 # 5. Finanzas y Promociones
-st.header("5. Estrategia Comercial y Promociones")[span_35](start_span)[span_35](end_span)
+st.header("5. Estrategia Comercial y Promociones")
 col9, col10 = st.columns(2)
 margen = col9.number_input("Ganancia (%)", min_value=0.0, value=25.0)
 iva_porcentaje = col10.number_input("IVA (%)", min_value=0.0, value=0.0)
 
-st.subheader("Descuentos por Promoción")[span_36](start_span)[span_36](end_span)
+st.subheader("Descuentos por Promoción")
 col_desc1, col_desc2 = st.columns(2)
-tipo_desc = col_desc1.selectbox("Tipo de Descuento", ["Ninguno", "Porcentaje (%)", "Monto Fijo ($)"])[span_37](start_span)[span_37](end_span)
-valor_desc = col_desc2.number_input("Valor del Descuento", min_value=0.0, value=0.0)[span_38](start_span)[span_38](end_span)
+tipo_desc = col_desc1.selectbox("Tipo de Descuento", ["Ninguno", "Porcentaje (%)", "Monto Fijo ($)"])
+valor_desc = col_desc2.number_input("Valor del Descuento", min_value=0.0, value=0.0)
 
 st.markdown("---")
 
@@ -123,7 +123,10 @@ if st.button("Calcular y Generar Cotización Pro", use_container_width=True):
         total_insumos_fab = insumos + costo_extra_acabado
 
         if "Sin instalación" in tipo_inst:
-            horas_inst = 0; mat_inst = 0; gasolina = 0; mano_obra_inst = 0
+            horas_inst = 0
+            mat_inst = 0
+            gasolina = 0
+            mano_obra_inst = 0
         else:
             mult_inst = 1.5 if "Compleja" in tipo_inst else 1.0
             mano_obra_inst = horas_inst * (hora_base * mult_inst)
@@ -139,14 +142,14 @@ if st.button("Calcular y Generar Cotización Pro", use_container_width=True):
         
         monto_descuento = 0.0
         if tipo_desc == "Porcentaje (%)":
-            monto_descuento = subtotal * (valor_desc / 100.0)[span_39](start_span)[span_39](end_span)
+            monto_descuento = subtotal * (valor_desc / 100.0)
         elif tipo_desc == "Monto Fijo ($)":
-            monto_descuento = valor_desc[span_40](start_span)[span_40](end_span)
+            monto_descuento = valor_desc
 
         subtotal_con_desc = subtotal - monto_descuento
         iva_monto = subtotal_con_desc * (iva_porcentaje / 100.0)
         total = subtotal_con_desc + iva_monto
-        ganancia_neta = (costo_puro_mueble + costo_puro_inst) * (margen/100)
+        ganancia_neta = (costo_puro_mueble + costo_puro_inst) * (margen / 100)
 
         st.success(f"Cálculo completado. Total a cobrar: ${total:,.2f}")
         
