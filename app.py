@@ -4,6 +4,20 @@ from fpdf import FPDF
 import tempfile
 import os
 
+# Función para limpiar textos para FPDF (evita UnicodeEncodeError con acentos y caracteres especiales)
+def clean_pdf_text(text):
+    if text is None:
+        return ""
+    replacements = {
+        'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+        'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U',
+        'ñ': 'n', 'Ñ': 'N', '•': '-', '–': '-', '—': '-',
+        '“': '"', '”': '"', '‘': "'", '’': "'"
+    }
+    for char, repl in replacements.items():
+        text = text.replace(char, repl)
+    return text.encode('latin-1', 'replace').decode('latin-1')
+
 st.set_page_config(page_title="JAM Woodlab App", page_icon="🪚", layout="centered")
 
 st.title("JAM Woodlab - Cotizador Web Pro")
@@ -41,7 +55,13 @@ detalle_materiales_pdf = []
 
 # --- A. Hojas / Tableros ---
 st.subheader("A. Hojas / Tableros (Triplay, MDF, Melamina)")
-usa_hojas = st.checkbox("¿El proyecto incluye hojas/tableros?", value=True)
+opcion_hojas = st.radio(
+    "¿El proyecto incluye hojas/tableros?:",
+    ["Sí, incluir tableros", "No requiere tableros"],
+    index=0,
+    horizontal=True
+)
+usa_hojas = "Sí" in opcion_hojas
 
 if usa_hojas:
     num_partidas = st.number_input("¿Cuántos tipos/espesores de hojas diferentes usarás?", min_value=1, max_value=5, value=1)
@@ -66,7 +86,13 @@ if usa_hojas:
 
 # --- B. Madera Sólida / Bastidor ---
 st.subheader("B. Madera Sólida (Bastidores, Listones, Estructuras)")
-usa_solida = st.checkbox("¿El proyecto incluye madera sólida (Pie Tablar)?", value=False)
+opcion_solida = st.radio(
+    "¿El proyecto incluye madera sólida (Pie Tablar)?:",
+    ["No requiere madera sólida", "Sí, incluir madera sólida"],
+    index=0,
+    horizontal=True
+)
+usa_solida = "Sí" in opcion_solida
 
 if usa_solida:
     st.markdown("Calcula por Pie Tablar directamente o por dimensiones de bastidor:")
@@ -91,7 +117,7 @@ if usa_solida:
         # Fórmula Pie Tablar: (Largo" * Ancho" * Grueso") / 144
         pt_calculados = ((largo_pulg * ancho_pulg * grueso_pulg) / 144.0) * piezas_solida
         costo_madera_solida = pt_calculados * costo_pt_calc
-        st.info(f"Pies Tablar calculados: **{pt_calculados:.2f} PT** (Costo total sólida: **${costo_madera_solida:,.2f}**) ")
+        st.info(f"Pies Tablar calculados: **{pt_calculados:.2f} PT** (Costo total sólida: **${costo_madera_solida:,.2f}**)")
         if pt_calculados > 0:
             detalle_materiales_pdf.append(f"- {piezas_solida} pza(s) Bastidor/Sólida ({pt_calculados:.2f} PT total)")
 
@@ -102,7 +128,6 @@ st.header("3. Fabricación y Acabados")
 detalle = st.selectbox("Dificultad de Fabricación", ["Básico (Armado rápido)", "Detallado (+30% tiempo)", "Alta Ebanistería (+80% tiempo)"])
 acabado = st.selectbox("Tipo de Acabado", ["Ninguno (Crudo)", "Aceite Danés / Cera Abeja", "Poliuretano / Barniz"])
 
-# Botón táctil grande para fácil selección en tablet/celular
 st.markdown("**¿Dispones del material de acabado en stock / inventario?**")
 opcion_stock = st.radio(
     "Selección de Inventario:",
@@ -117,13 +142,13 @@ hora_base = col4.number_input("Tarifa por Hora de Mano de Obra ($)", min_value=0
 
 costo_extra_acabado = 0.0
 if "Poliuretano" in acabado:
-    kit_completo_poli = 850.0  # Primer, Acabado, Catalizador, Thinner
+    kit_completo_poli = 850.0
     costo_extra_acabado = kit_completo_poli * 0.35 if usar_stock else kit_completo_poli
 elif "Aceite" in acabado:
-    kit_completo_aceite = 450.0  # 1L aceite + 1/4L tinta
+    kit_completo_aceite = 450.0
     costo_extra_acabado = kit_completo_aceite * 0.35 if usar_stock else kit_completo_aceite
 
-# --- Seccion Insumos y Herrajes ---
+# --- Sección Insumos y Herrajes ---
 st.subheader("Insumos, Herrajes y Especiales")
 modo_insumos = st.radio("Modalidad de Insumos:", ["Monto Fijo Global", "Desglosar Insumos y Herrajes"], horizontal=True)
 
@@ -182,7 +207,6 @@ if st.button("Calcular y Generar Cotización Pro", use_container_width=True):
     if not cliente or not proyecto:
         st.error("Por favor, ingresa el nombre del cliente y el proyecto.")
     else:
-        # CÁLCULOS TÉCNICOS
         mult_detalle = 1.3 if "Detallado" in detalle else 1.8 if "Ebanistería" in detalle else 1.0
         mult_acabado = 1.25 if "Poliuretano" in acabado else 1.05 if "Aceite" in acabado else 1.0
 
@@ -197,12 +221,9 @@ if st.button("Calcular y Generar Cotización Pro", use_container_width=True):
 
         factor_ganancia = 1 + (margen / 100.0)
         
-        # COSTOS PUROS REALES
         costo_puro_mueble = costo_madera_total + costo_insumos_total + costo_extra_acabado + mano_obra_fab
         costo_puro_inst_real = mano_obra_inst + mat_inst + gasolina
         
-        # AJUSTE 70% / 30% FLETE E INSTALACIÓN
-        # Se muestra 70% en la partida de instalación y el 30% restante se absorbe en el mueble
         flete_visible = costo_puro_inst_real * 0.70
         flete_oculto = costo_puro_inst_real * 0.30
 
@@ -224,7 +245,6 @@ if st.button("Calcular y Generar Cotización Pro", use_container_width=True):
 
         st.success(f"Cálculo completado. Total a cobrar: ${total:,.2f}")
         
-        # DESGLOSE INTERNO DETALLADO
         with st.expander("🔍 Ver Desglose Interno Detallado (Oculto al Cliente)"):
             st.markdown("### 1. Costos de Materiales")
             st.write(f"- **Hojas / Tableros:** ${costo_madera_hojas:,.2f}")
@@ -251,7 +271,7 @@ if st.button("Calcular y Generar Cotización Pro", use_container_width=True):
             st.markdown("---")
             st.write(f"💰 **Ganancia Neta Estimada ({margen}%):** **${ganancia_neta:,.2f}**")
 
-        # GENERAR PDF COMERCIAL MEJORADO
+        # GENERAR PDF COMERCIAL
         fecha_actual = datetime.now().strftime("%d/%m/%Y")
         pdf = FPDF()
         pdf.add_page()
@@ -262,70 +282,65 @@ if st.button("Calcular y Generar Cotización Pro", use_container_width=True):
             except:
                 pass
 
-        # Encabezado
         pdf.set_font("Arial", 'B', 22)
         pdf.set_text_color(51, 51, 51)
-        pdf.cell(0, 12, txt="JAM WOODLAB", ln=True, align='R')
+        pdf.cell(0, 12, txt=clean_pdf_text("JAM WOODLAB"), ln=True, align='R')
         pdf.set_font("Arial", '', 10)
         pdf.set_text_color(100, 100, 100)
-        pdf.cell(0, 5, txt="Diseño y Carpintería de Autor", ln=True, align='R')
-        pdf.cell(0, 5, txt=f"Fecha de Cotización: {fecha_actual}", ln=True, align='R')
+        pdf.cell(0, 5, txt=clean_pdf_text("Diseno y Carpinteria de Autor"), ln=True, align='R')
+        pdf.cell(0, 5, txt=clean_pdf_text(f"Fecha de Cotizacion: {fecha_actual}"), ln=True, align='R')
         pdf.ln(8)
         
-        # Cliente
         pdf.set_font("Arial", 'B', 11)
         pdf.set_text_color(0, 0, 0)
-        pdf.cell(0, 6, txt=f"COTIZACIÓN PARA: {cliente.upper()}", ln=True)
+        pdf.cell(0, 6, txt=clean_pdf_text(f"COTIZACION PARA: {cliente.upper()}"), ln=True)
         pdf.ln(4)
         
-        # 1. Especificaciones del Proyecto
         pdf.set_fill_color(240, 240, 240)
         pdf.set_font("Arial", 'B', 11)
-        pdf.cell(0, 7, txt=f" 1. ESPECIFICACIONES DEL PROYECTO: {proyecto.upper()}", ln=True, fill=True)
+        pdf.cell(0, 7, txt=clean_pdf_text(f" 1. ESPECIFICACIONES DEL PROYECTO: {proyecto.upper()}"), ln=True, fill=True)
         pdf.set_font("Arial", '', 10)
-        pdf.cell(0, 6, txt=f"  • Categoría: {categoria}", ln=True)
-        pdf.cell(0, 6, txt=f"  • Acabado y Protección: {acabado}", ln=True)
+        pdf.cell(0, 6, txt=clean_pdf_text(f"  - Categoria: {categoria}"), ln=True)
+        pdf.cell(0, 6, txt=clean_pdf_text(f"  - Acabado y Proteccion: {acabado}"), ln=True)
         if detalle_materiales_pdf:
-            pdf.cell(0, 6, txt="  • Materiales principales contemplados:", ln=True)
+            pdf.cell(0, 6, txt=clean_pdf_text("  - Materiales principales contemplados:"), ln=True)
             for det_mat in detalle_materiales_pdf:
-                pdf.cell(0, 5, txt=f"     {det_mat}", ln=True)
+                pdf.cell(0, 5, txt=clean_pdf_text(f"     {det_mat}"), ln=True)
         pdf.ln(6)
         
-        # 2. Términos y Condiciones
         pdf.set_font("Arial", 'B', 11)
-        pdf.cell(0, 7, txt=" 2. CONDICIONES COMERCIALES Y DE SERVICIO", ln=True, fill=True)
+        pdf.cell(0, 7, txt=clean_pdf_text(" 2. CONDICIONES COMERCIALES Y DE SERVICIO"), ln=True, fill=True)
         pdf.set_font("Arial", '', 9)
-        pdf.cell(0, 5, txt="  • Anticipo: 60% al confirmar el pedido; 40% restante a la entrega e instalación.", ln=True)
-        pdf.cell(0, 5, txt="  • Incluye: Fabricación a medida con procesos artesanales y acabados de alta durabilidad.", ln=True)
+        pdf.cell(0, 5, txt=clean_pdf_text("  - Anticipo: 60% al confirmar el pedido; 40% restante a la entrega e instalacion."), ln=True)
+        pdf.cell(0, 5, txt=clean_pdf_text("  - Incluye: Fabricacion a medida con procesos artesanales y acabados de alta durabilidad."), ln=True)
         if "Sin instalación" not in tipo_inst:
-            pdf.cell(0, 5, txt=f"  • Incluye: Logística de traslado y montaje profesional en sitio ({tipo_inst}).", ln=True)
-        pdf.cell(0, 5, txt="  • Exclusiones: Trabajos de albañilería, resane de muros, pintura externa ni adaptaciones de plomería.", ln=True)
-        pdf.cell(0, 5, txt="  • Garantía: 12 meses sobre ensambles y defectos estructurales de fabricación.", ln=True)
+            pdf.cell(0, 5, txt=clean_pdf_text(f"  - Incluye: Logistica de traslado y montaje profesional en sitio ({tipo_inst})."), ln=True)
+        pdf.cell(0, 5, txt=clean_pdf_text("  - Exclusiones: Trabajos de albanileria, resane de muros, pintura externa ni adaptaciones de plomeria."), ln=True)
+        pdf.cell(0, 5, txt=clean_pdf_text("  - Garantia: 12 meses sobre ensambles y defectos estructurales de fabricacion."), ln=True)
         pdf.ln(6)
 
-        # 3. Inversión
         pdf.set_font("Arial", 'B', 11)
-        pdf.cell(0, 7, txt=" 3. DESGLOSE DE INVERSIÓN", ln=True, fill=True)
+        pdf.cell(0, 7, txt=clean_pdf_text(" 3. DESGLOSE DE INVERSION"), ln=True, fill=True)
         pdf.set_font("Arial", '', 10)
         
-        pdf.cell(140, 7, txt="Fabricación integral de mueble y acabados", border='B')
+        pdf.cell(140, 7, txt=clean_pdf_text("Fabricacion integral de mueble y acabados"), border='B')
         pdf.cell(50, 7, txt=f"${precio_venta_mueble:,.2f}", border='B', align='R', ln=True)
         
         if precio_venta_inst > 0:
-            pdf.cell(140, 7, txt="Servicio de Logística, Flete y Montaje en sitio", border='B')
+            pdf.cell(140, 7, txt=clean_pdf_text("Servicio de Logistica, Flete y Montaje en sitio"), border='B')
             pdf.cell(50, 7, txt=f"${precio_venta_inst:,.2f}", border='B', align='R', ln=True)
         
         if monto_descuento > 0:
-            pdf.cell(140, 7, txt="Descuento Promocional Aplicado", border='B')
+            pdf.cell(140, 7, txt=clean_pdf_text("Descuento Promocional Aplicado"), border='B')
             pdf.cell(50, 7, txt=f"- ${monto_descuento:,.2f}", border='B', align='R', ln=True)
 
         if iva_porcentaje > 0:
-            pdf.cell(140, 7, txt=f"IVA ({iva_porcentaje}%)", border='B')
+            pdf.cell(140, 7, txt=clean_pdf_text(f"IVA ({iva_porcentaje}%)"), border='B')
             pdf.cell(50, 7, txt=f"${iva_monto:,.2f}", border='B', align='R', ln=True)
 
         pdf.ln(4)
         pdf.set_font("Arial", 'B', 13)
-        pdf.cell(140, 8, txt="INVERSIÓN TOTAL:", align='R')
+        pdf.cell(140, 8, txt=clean_pdf_text("INVERSION TOTAL:"), align='R')
         pdf.cell(50, 8, txt=f"${total:,.2f}", align='R', ln=True)
         
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
